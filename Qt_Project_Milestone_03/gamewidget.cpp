@@ -20,9 +20,10 @@ GameWidget::GameWidget(QWidget *parent) :
     ca1(),
     universeSize(50),
     universeMode(0),
-    cellMode(0)
+    cellMode(0),
+    lifeTime(50)
     //randomMode(0)
-    //lifeTime(50)
+
 {
     timer->setInterval(300);
     timerColor->setInterval(50);
@@ -39,15 +40,16 @@ GameWidget::~GameWidget() {
 
 void GameWidget::startGame(const int &number) {
     /* start the game */
-    emit gameStarted(true);
+    emit gameStarted(universeMode, true);
     generations = number;
     timer->start();
+    this->setFocus();
 }
 
 
 void GameWidget::stopGame() {
     /* stop the game */
-    emit gameStopped(true);
+    emit gameStopped(universeMode, true);
     timer->stop();
     timerColor->stop();
 }
@@ -59,7 +61,7 @@ void GameWidget::clearGame() {
             ca1.setValue(j, k, 0);
         }
     }
-    gameEnds(true);
+    gameEnds(universeMode, true);
     ca1.resetWorldSize(universeSize, universeSize);
 
     //
@@ -243,18 +245,17 @@ void GameWidget::newGeneration() {
         generations++;
 
     switch (universeMode) {
-    //
     // game of life
-    //
     case 0:
         ca1.worldEvolutionLife();
         break;
-    //
     // snake
-    //
     case 1:
         ca1.worldEvolutionSnake();
         break;
+    // predator-prey
+    case 2:
+        ca1.worldEvolutionLife();
     default:
         break;
     }
@@ -268,35 +269,38 @@ void GameWidget::newGeneration() {
 
         QMessageBox msgBox;
         switch (universeMode) {
-        //
         // game of life
-        //
         case 0:
             msgBox.setIcon(QMessageBox::Information);
             msgBox.setText(headlines[0]);
             msgBox.setInformativeText(details[0]);
-        break;
-        //
+            break;
         // snake
-        //
         case 1:
             msgBox.setIcon(QMessageBox::Information);
             msgBox.setText(headlines[1]);
             msgBox.setInformativeText(details[1]);
-
+            break;
+        // predator-prey
+        case 2:
+            msgBox.setIcon(QMessageBox::Information);
+            msgBox.setText(headlines[0]);
+            msgBox.setInformativeText(details[0]);
+            break;
+        //
         default:
             break;
         }
         msgBox.exec();
         stopGame();
-        gameEnds(true);
+        gameEnds(universeMode, true);
         return;
     }
 
     generations--;
     if (generations == 0) {
         stopGame();
-        gameEnds(true);
+        gameEnds(universeMode, true);
         QMessageBox::information(this, tr("Game finished."), tr("Iterations finished."),
                                  QMessageBox::Ok, QMessageBox::Cancel);
     }
@@ -314,7 +318,7 @@ void GameWidget::newGenerationColor() {
     generations--;
     if (generations == 0) {
         stopGame();
-        gameEnds(true);
+        gameEnds(universeMode, true);
         QMessageBox::information(this, tr("Game finished."), tr("Iterations finished."),
                                  QMessageBox::Ok, QMessageBox::Cancel);
     }
@@ -329,27 +333,67 @@ void GameWidget::paintEvent(QPaintEvent *) {
 
 
 void GameWidget::mousePressEvent(QMouseEvent *e) {
-    emit universeModified(true);
+    emit universeModified(universeMode, true);
     double cellWidth = (double) width() / universeSize;
     double cellHeight = (double) height() / universeSize;
     int k = floor(e->y() / cellHeight) + 1;
     int j = floor(e->x() / cellWidth) + 1;
 
-    int mode[9] = {1, 3, 6, 4, 2, 8, 9, 10, 11};
+    // int mode[9] = {1, 3, 6, 4, 2, 8, 9, 10, 11};
 
-    //
     // game of life
-    //
     if (universeMode == 0) {
         if (ca1.getValue(j, k) != 0) {
             ca1.setValue(j, k, 0);
-            ca1.setLifetime(j, k, 0);
+            //ca1.setLifetime(j, k, 0);
         }
         else {
-            ca1.setValue(j, k, mode[cellMode]);
-            if (mode[cellMode] == 9 || mode[cellMode] == 10)
-                ca1.setLifetime(j, k, 50); // lifeTime = 50
+            ca1.setValue(j, k, 1);
         }
+        update();
+    }
+    // predator-prey
+    else if (universeMode == 2) {
+        switch (cellMode) {
+        case 0: // predator
+            if (ca1.getValue(j, k) != 1) {
+                ca1.setValue(j, k, 1);
+                ca1.setLifetime(j, k, lifeTime);
+            } else {
+                ca1.setValue(j, k, 0);
+                ca1.setLifetime(j, k, 0);
+            }
+            break;
+        case 1: // prey
+            if (ca1.getValue(j, k) != 2) {
+                ca1.setValue(j, k, 2);
+                ca1.setLifetime(j, k, lifeTime);
+            } else {
+                ca1.setValue(j, k, 0);
+                ca1.setLifetime(j, k, 0);
+            }
+            break;
+        case 2: // food
+            if (ca1.getValue(j, k) != 5) {
+                ca1.setValue(j, k, 5);
+                ca1.setLifetime(j, k, 0);
+            } else {
+                ca1.setValue(j, k, 0);
+                ca1.setLifetime(j, k, 0);
+            }
+            break;
+        default:
+            break;
+        }
+//        if (ca1.getValue(j, k) != 0) {
+//            ca1.setValue(j, k, 0);
+//            ca1.setLifetime(j, k, 0);
+//        }
+//        else {
+//            ca1.setValue(j, k, mode[cellMode]);
+//            if (mode[cellMode] == 9 || mode[cellMode] == 10)
+//                ca1.setLifetime(j, k, 50); // lifeTime = 50
+//        }
         update();
     }
 }
@@ -361,15 +405,50 @@ void GameWidget::mouseMoveEvent(QMouseEvent *e) {
     int k = floor(e->y() / cellHeight) + 1;
     int j = floor(e->x() / cellWidth) + 1;
 
-    int mode[9] = {1, 3, 6, 4, 2, 8, 9, 10, 11};
+    // int mode[9] = {1, 3, 6, 4, 2, 8, 9, 10, 11};
 
     if (universeMode == 0) {
         if (ca1.getValue(j, k) == 0) {
-            ca1.setValue(j, k, mode[cellMode]);
-            if (mode[cellMode] == 9 || mode[cellMode] == 10)
-                ca1.setLifetime(j, k, 50); // lifetime = 50
+            ca1.setValue(j, k, 1);
+//            ca1.setValue(j, k, mode[cellMode]);
+//            if (mode[cellMode] == 9 || mode[cellMode] == 10)
+//                ca1.setLifetime(j, k, 50); // lifetime = 50
             update();
         }
+    }
+    else if (universeMode == 2) {
+        switch (cellMode) {
+        case 0: // predator
+            if (ca1.getValue(j, k) != 1) {
+                ca1.setValue(j, k, 1);
+                ca1.setLifetime(j, k, lifeTime);
+            } else {
+                ca1.setValue(j, k, 0);
+                ca1.setLifetime(j, k, 0);
+            }
+            break;
+        case 1: // prey
+            if (ca1.getValue(j, k) != 2) {
+                ca1.setValue(j, k, 2);
+                ca1.setLifetime(j, k, lifeTime);
+            } else {
+                ca1.setValue(j, k, 0);
+                ca1.setLifetime(j, k, 0);
+            }
+            break;
+        case 2: // food
+            if (ca1.getValue(j, k) != 5) {
+                ca1.setValue(j, k, 5);
+                ca1.setLifetime(j, k, 0);
+            } else {
+                ca1.setValue(j, k, 0);
+                ca1.setLifetime(j, k, 0);
+            }
+            break;
+        default:
+            break;
+        }
+        update();
     }
 }
 
@@ -398,7 +477,13 @@ void GameWidget::paintUniverse(QPainter &p) {
                 qreal left = (qreal) (cellWidth * j - cellWidth); // margin from left
                 qreal top  = (qreal) (cellHeight * k - cellHeight); // margin from top
                 QRectF r(left, top, (qreal) cellWidth, (qreal) cellHeight);
-                p.fillRect(r, QBrush(masterColor));
+                // p.fillRect(r, QBrush(masterColor));
+                if (universeMode == 0 | universeMode == 1) {
+                    p.fillRect(r, QBrush(masterColor));
+                } else {
+                    p.fillRect(r, getPredefinedColor(ca1.getValue(j, k))); //fill cell with brush of cell type
+                }
+
 //                if (0 && universeMode != 7) { // randomMode = 0
 //                    p.fillRect(r, setColor(ca1.getColor(j, k))); //fill cell with brush from random mode
 //                 }
@@ -469,47 +554,32 @@ void GameWidget::setPositionFood(int x, int y) {
 }
 
 
-
-//void GameWidget::keyPressEvent(QKeyEvent *e) {
-
-//    int keyValue = e->key();
-//    if (keyValue == Qt::Key_8) {
-//        GameWidget::calcDirectionSnake(8);
-//    } else if (keyValue == Qt::Key_2) {
-//        GameWidget::calcDirectionSnake(2);
-//    } else if (keyValue == Qt::Key_4) {
-//        GameWidget::calcDirectionSnake(4);
-//    } else if (keyValue == Qt::Key_6) {
-//        GameWidget::calcDirectionSnake(6);
-//    }
-//}
+int GameWidget::getLifetime() {
+    /* get the lifetime of each cell */
+    return lifeTime;
+}
 
 
-//int GameWidget::getLifeInterval() {
-//    get the lifetime of each cell, ie. number of generations it will be in the universe
-//    return lifeTime;
-//}
+void GameWidget::setLifetime(const int &l) {
+    /* set lifetime for all cells in the universe */
+    lifeTime = l;
+}
 
 
-//void GameWidget::setLifeInterval(const int &l) {
-//    /* set lifetime for all cells in the universe */
-//    lifeTime = l;
-//}
+QColor GameWidget::getPredefinedColor(const int &color) {
+    QColor cellColor[12]= {Qt::red,
+                           Qt::darkRed,
+                           Qt::green,
+                           Qt::darkGreen,
+                           Qt::blue,
+                           Qt::darkBlue,
+                           Qt::cyan,
+                           Qt::darkCyan,
+                           Qt::magenta,
+                           Qt::darkMagenta,
+                           Qt::yellow,
+                           Qt::darkYellow};
 
+    return cellColor[color];
+}
 
-//QColor GameWidget::setColor(const int &color) {
-//    QColor cellColor[12]= {Qt::red,
-//                           Qt::darkRed,
-//                           Qt::green,
-//                           Qt::darkGreen,
-//                           Qt::blue,
-//                           Qt::darkBlue,
-//                           Qt::cyan,
-//                           Qt::darkCyan,
-//                           Qt::magenta,
-//                           Qt::darkMagenta,
-//                           Qt::yellow,
-//                           Qt::darkYellow};
-
-//    return cellColor[color];
-//}

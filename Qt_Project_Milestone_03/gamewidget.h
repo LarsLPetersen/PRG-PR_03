@@ -20,13 +20,12 @@ protected:
     void paintEvent(QPaintEvent *);
     void mousePressEvent(QMouseEvent *e);
     void mouseMoveEvent(QMouseEvent *e);
-    //void keyPressEvent(QKeyEvent *e);
 
 signals:
-    void universeModified(bool);
-    void gameStarted(bool);
-    void gameStopped(bool);
-    void gameEnds(bool);
+    void universeModified(int, bool);
+    void gameStarted(int, bool);
+    void gameStopped(int, bool);
+    void gameEnds(int, bool);
 
 
 public slots:
@@ -46,12 +45,13 @@ public slots:
     int getInterval();
     void setInterval(int msec);
 
-    // int getLifeInterval(); // cell's lifetime - number of generations each cell will be in universe
-    // void setLifeInterval(const int &l); // set lifetime for cells
+    int getLifetime();
+    void setLifetime(const int &l);
 
     QColor getMasterColor();
     void setMasterColor(const QColor &color);
-    //QColor setColor(const int &color);
+
+    QColor getPredefinedColor(const int &color);
 
     QString dumpGame();
     void reconstructGame(const QString &data);
@@ -71,6 +71,9 @@ public slots:
 
     void setSnakeAction(int a);
 
+    //
+    // predator-prey
+    //
 
 private slots:
     void paintGrid(QPainter &p);
@@ -82,13 +85,14 @@ private:
     QColor masterColor;
     QTimer *timer;
     QTimer *timerColor;
-    int generations;
     CAbase ca1;
     int universeSize;
     int universeMode;
     int cellMode;
+    int lifeTime;
+    int generations;
     // int randomMode;
-    // int lifeTime;
+
 };
 
 

@@ -22,9 +22,7 @@ MainWindow::MainWindow(QWidget *parent) :
     /* game choices */
     ui->universeModeControl->addItem("Game of Life");
     ui->universeModeControl->addItem("Snake");
-
-    /* cell mode choices */
-    ui->cellModeControl->addItem("Classic");
+    ui->universeModeControl->addItem("Predator-Prey");
 
     /* color icons for color buttons */
     QPixmap icon(16, 16);
@@ -39,37 +37,18 @@ MainWindow::MainWindow(QWidget *parent) :
     /* spin boxes */
     connect(ui->intervalControl, SIGNAL(valueChanged(int)), game, SLOT(setInterval(int)));
     connect(ui->universeSizeControl, SIGNAL(valueChanged(int)), game, SLOT(setUniverseSize(int)));
+    connect(ui->lifetimeControl, SIGNAL(valueChanged(int)), game, SLOT(setLifetime(int)));
 
     /* combo boxes */
     connect(ui->universeModeControl, SIGNAL(currentIndexChanged(int)), game, SLOT(setUniverseMode(int)));
+    connect(ui->universeModeControl, SIGNAL(currentIndexChanged(int)), this, SLOT(globalButtonControl(int)));
     connect(ui->cellModeControl, SIGNAL(currentIndexChanged(int)), game, SLOT(setCellMode(int)));
 
     /* enable/disable interaction during the game */
-    connect(game, SIGNAL(gameStarted(bool)), ui->universeSizeControl, SLOT(setDisabled(bool)));
-    connect(game, SIGNAL(gameStarted(bool)), ui->universeModeControl, SLOT(setDisabled(bool)));
-    connect(game, SIGNAL(gameStarted(bool)), ui->intervalControl, SLOT(setDisabled(bool)));
-    connect(game, SIGNAL(gameStarted(bool)), ui->saveButton, SLOT(setDisabled(bool)));
-    connect(game, SIGNAL(gameStarted(bool)), ui->loadButton, SLOT(setDisabled(bool)));
-    //connect(game, SIGNAL(gameStarted(bool)), ui->cellModeControl, SLOT(setDisabled(bool)));
-
-    connect(game, SIGNAL(universeModified(bool)), ui->universeSizeControl, SLOT(setDisabled(bool)));
-    connect(game, SIGNAL(universeModified(bool)), ui->universeModeControl, SLOT(setDisabled(bool)));
-    connect(game, SIGNAL(universeModified(bool)), ui->intervalControl, SLOT(setDisabled(bool)));
-    //connect(game, SIGNAL(universeModified(bool)), ui->cellModeControl, SLOT(setDisabled(bool)));
-
-    connect(game, SIGNAL(gameStopped(bool)), ui->universeSizeControl, SLOT(setEnabled(bool)));
-    connect(game, SIGNAL(gameStopped(bool)), ui->universeModeControl, SLOT(setEnabled(bool)));
-    connect(game, SIGNAL(gameStopped(bool)), ui->intervalControl, SLOT(setEnabled(bool)));
-    connect(game, SIGNAL(gameStopped(bool)), ui->saveButton, SLOT(setEnabled(bool)));
-    connect(game, SIGNAL(gameStopped(bool)), ui->loadButton, SLOT(setEnabled(bool)));
-    //connect(game, SIGNAL(gameStopped(bool)), ui->cellModeControl, SLOT(setEnabled(bool)));
-
-    connect(game, SIGNAL(gameEnds(bool)), ui->universeSizeControl, SLOT(setEnabled(bool)));
-    connect(game, SIGNAL(gameEnds(bool)), ui->universeModeControl, SLOT(setEnabled(bool)));
-    connect(game, SIGNAL(gameEnds(bool)), ui->intervalControl, SLOT(setEnabled(bool)));
-    connect(game, SIGNAL(gameEnds(bool)), ui->saveButton, SLOT(setEnabled(bool)));
-    connect(game, SIGNAL(gameEnds(bool)), ui->loadButton, SLOT(setEnabled(bool)));
-    //connect(game, SIGNAL(gameEnds(bool)), ui->cellModeControl, SLOT(setEnabled(bool)));
+    connect(game, SIGNAL(gameStarted(int, bool)), this, SLOT(disableControls(int, bool)));
+    connect(game, SIGNAL(universeModified(int, bool)), this, SLOT(disableControls(int, bool)));
+    connect(game, SIGNAL(gameStopped(int, bool)), SLOT(enableControls(int, bool)));
+    connect(game, SIGNAL(gameEnds(int, bool)), this, SLOT(enableControls(int,bool)));
 
     /* color choices */
     connect(ui->colorSelectButton, SIGNAL(clicked()), this, SLOT(selectMasterColor()));
@@ -86,6 +65,8 @@ MainWindow::MainWindow(QWidget *parent) :
     /* add gamewidget to gameLayout */
     ui->gameLayout->addWidget(game);
 
+    globalButtonControl(game->getUniverseMode());
+
     /* send keystrokes to snake game */
     KeyPressFilter *keyPressFilter = new KeyPressFilter(this->game);
     this->installEventFilter(keyPressFilter);
@@ -95,6 +76,60 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow() {
     delete ui;
+}
+
+
+void MainWindow::globalButtonControl(int uM) {
+    if (uM < 2) {
+        ui->cellModeControl->clear();
+        ui->cellModeControl->setDisabled(true);
+        ui->lifetimeControl->clear();
+        ui->lifetimeControl->setDisabled(true);
+    }
+    else {
+        /* cell mode choices */
+        ui->cellModeControl->addItem("Predator");
+        ui->cellModeControl->addItem("Prey");
+        ui->cellModeControl->addItem("Food");
+        ui->cellModeControl->setEnabled(true);
+
+        ui->lifetimeControl->setMinimum(1);
+        ui->lifetimeControl->setMaximum(99);
+        ui->lifetimeControl->setValue(50);
+        ui->lifetimeControl->setEnabled(true);
+
+        ui->colorRandomButton->setDisabled(true);
+        ui->colorSelectButton->setDisabled(true);
+
+    }
+}
+
+
+void MainWindow::enableControls(int uM, bool b) {
+    ui->loadButton->setEnabled(b);
+    ui->saveButton->setEnabled(b);
+    ui->intervalControl->setEnabled(b);
+    ui->universeSizeControl->setEnabled(b);
+    ui->universeModeControl->setEnabled(b);
+
+    if (uM >= 2) {
+        ui->cellModeControl->setEnabled(true);
+        ui->lifetimeControl->setEnabled(true);
+    }
+}
+
+
+void MainWindow::disableControls(int uM, bool b) {
+    ui->loadButton->setDisabled(b);
+    ui->saveButton->setDisabled(b);
+    ui->intervalControl->setDisabled(b);
+    ui->universeSizeControl->setDisabled(b);
+    ui->universeModeControl->setDisabled(b);
+
+    if (uM >= 2) {
+        // ui->cellModeControl->setDisabled(true);
+        ui->lifetimeControl->setDisabled(true);
+    }
 }
 
 
@@ -348,12 +383,4 @@ void MainWindow::selectRandomColor() {
     QPixmap icon(16, 16);
     icon.fill(color);
     ui->colorSelectButton->setIcon(QIcon(icon));
-}
-
-
-void MainWindow::goGame() {
-    /*
-     *  mit entsprechendem Inhalt zu fuellen
-     *
-     */
 }

@@ -12,13 +12,13 @@ bool KeyPressFilter::eventFilter(QObject *watched, QEvent *event) {
         int key = keyEvent->key();
 
         /* act when one of the relevant keys 2, 4, 6, 8 is pressed */
-        if (key == Qt::Key_2) {
+        if (key == Qt::Key_Down) {
             emit keyPressed(2);
-        } else if (key == Qt::Key_8) {
+        } else if (key == Qt::Key_Up) {
             emit keyPressed(8);
-        } else if (key == Qt::Key_4) {
+        } else if (key == Qt::Key_Left) {
             emit keyPressed(4);
-        } else if (key == Qt::Key_6) {
+        } else if (key == Qt::Key_Right) {
             emit keyPressed(6);
         }
         return true;

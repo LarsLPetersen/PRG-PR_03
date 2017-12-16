@@ -76,6 +76,18 @@ public:
         worldNew[y * (Nx + 2) + x] = i;
     }
 
+    int getDirection(int x, int y) {
+        return worldDirection[y * (Nx + 2) + x];
+    }
+
+    void setDirection(int x, int y, int i) {
+        worldDirection[y * (Nx + 2) + x] = i;
+    }
+
+    void setDirectionNew(int x, int y, int i) {
+        worldDirectionNew[y * (Nx + 2) + x] = i;
+    }
+
     bool isNotChanged() {
         return nochanges;
     }
@@ -92,7 +104,6 @@ public:
     //
     // snake
     //
-
     struct direction {
         int past;
         int future;
@@ -129,6 +140,15 @@ public:
 
     void putInitSnake();
 
+    //
+    // predator-prey
+    //
+    void cellEvolutionMove(int x, int y);
+
+    void cellEvolutionDirection(int x, int y);
+
+    void worldEvolutionPredator();
+
 
 private:
     int Ny;
@@ -139,6 +159,8 @@ private:
     int *worldColorNew;
     int *worldLifetime;
     int *worldLifetimeNew;
+    int *worldDirection;
+    int *worldDirectionNew;
     bool nochanges;
     int snakeAction;
     int snakeLength;
@@ -151,6 +173,7 @@ inline void CAbase::resetWorldSize(int nx, int ny, bool del) {
     Ny = ny;
 
     if (!del) {
+        // universe
         delete[] world;
         delete[] worldNew;
 
@@ -158,10 +181,15 @@ inline void CAbase::resetWorldSize(int nx, int ny, bool del) {
         delete[] worldColor;
         delete[] worldColorNew;
 
-        //lifetime
+        // lifetime
         delete[] worldLifetime;
         delete[] worldLifetimeNew;
+
+        // direction
+        delete[] worldDirection;
+        delete[] worldDirectionNew;
     }
+
     // main universe
     world = new int[(Ny + 2) * (Nx + 2) + 1];
     worldNew = new int[(Ny + 2) * (Nx + 2) + 1];
@@ -174,19 +202,28 @@ inline void CAbase::resetWorldSize(int nx, int ny, bool del) {
     worldLifetime = new int[(Ny + 2) * (Nx + 2) + 1];
     worldLifetimeNew = new int[(Ny + 2) * (Nx + 2) + 1];
 
+    // direction
+    worldDirection = new int[(Ny + 2) * (Nx + 2) + 1];
+    worldDirectionNew = new int[(Ny + 2) * (Nx + 2) + 1];
+
     for (int i = 0; i <= (Ny + 2) * (Nx + 2); i++) {
         // set border cells to -1 (still involving modular arithmetic -> toric case
         if ( (i < (Nx + 2)) || (i >= (Ny + 1) * (Nx + 2)) || (i % (Nx + 2) == 0) || (i % (Nx + 2) == (Nx + 1)) ) {
+            // universe
             world[i] = -1;
             worldNew[i] = -1;
 
-            // Color
+            // color
             worldColor[i] = -1;
             worldColorNew[i] = -1;
 
-            // Lifetime
+            // lifetime
             worldLifetime[i] = -1;
             worldLifetimeNew[i] = -1;
+
+            // direction
+            worldDirection[i] = -1;
+            worldDirectionNew[i] = -1;
         }
         // default to 0
         else {
@@ -198,9 +235,13 @@ inline void CAbase::resetWorldSize(int nx, int ny, bool del) {
             worldColor[i] = 0;
             worldColorNew[i] = 0;
 
-            // cifetime
+            // lifetime
             worldLifetime[i] = 0;
             worldLifetimeNew[i] = 0;
+
+            // direction
+            worldDirection[i] = 0;
+            worldDirectionNew[i] = 0;
         }
     }
 }
@@ -250,7 +291,7 @@ inline void CAbase::worldEvolutionLife() {
     /* apply cell evolution to the universe */
     for (int ix = 1; ix <= Nx; ix++) {
         for (int iy = 1; iy <= Ny; iy++) {
-                cellEvolutionLife(ix, iy);
+            cellEvolutionLife(ix, iy);
         }
     }
 
@@ -513,6 +554,24 @@ inline void CAbase::worldEvolutionSnake() {
     default:
         break;
     }
+}
+
+
+//
+// predator-prey
+//
+inline void CAbase::cellEvolutionMove(int x, int y) {
+
+}
+
+
+inline void CAbase::cellEvolutionDirection(int x, int y) {
+
+}
+
+
+inline void CAbase::worldEvolutionPredator() {
+
 }
 
 

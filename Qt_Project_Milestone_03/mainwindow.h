@@ -22,7 +22,9 @@ public slots:
     void selectRandomColor();
     void saveGame();
     void loadGame();
-    void goGame();
+    void globalButtonControl(int uM);
+    void enableControls(int uM, bool b);
+    void disableControls(int uM, bool b);
 
 private:
     Ui::MainWindow *ui;

@@ -90,21 +90,21 @@
        <item>
         <widget class="QLabel" name="cellModeLabel">
          <property name="text">
-          <string>Cells Mode</string>
+          <string>Cell Mode</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QComboBox" name="cellModeControl">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="generationIntervalLabel">
          <property name="text">
-          <string>Generation interval (in msec)</string>
+          <string>Evolution interval (msec)</string>
          </property>
         </widget>
        </item>
@@ -127,6 +127,23 @@
          </property>
          <property name="value">
           <number>300</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lifetimeLabel">
+         <property name="text">
+          <string>Lifetime (evolution steps)</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QSpinBox" name="lifetimeControl">
+         <property name="minimum">
+          <number>1</number>
+         </property>
+         <property name="value">
+          <number>20</number>
          </property>
         </widget>
        </item>
@@ -159,16 +176,6 @@
         <widget class="QPushButton" name="colorRandomButton">
          <property name="text">
           <string>Random Color for Cells</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="gameGoButton">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>GO!</string>
          </property>
         </widget>
        </item>
