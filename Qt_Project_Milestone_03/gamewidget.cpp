@@ -29,6 +29,7 @@ GameWidget::GameWidget(QWidget *parent) :
     timerColor->setInterval(50);
     masterColor = "#000";
     ca1.resetWorldSize(universeSize, universeSize);
+    ca1.lifeTimeUI = lifeTime;
     connect(timer, SIGNAL(timeout()), this, SLOT(newGeneration()));
     connect(timerColor, SIGNAL(timeout()), this, SLOT(newGenerationColor()));
 }
@@ -56,22 +57,31 @@ void GameWidget::stopGame() {
 
 
 void GameWidget::clearGame() {
+    qDebug() << "Clearing the game ...";
     for (int k = 1; k <= universeSize; k++) {
         for (int j = 1; j <= universeSize; j++) {
             ca1.setValue(j, k, 0);
         }
     }
     gameEnds(universeMode, true);
+    qDebug() << "Resetting Worldsize ...";
     ca1.resetWorldSize(universeSize, universeSize);
 
-    //
     // snake
-    //
     if (universeMode == 1) {
         ca1.putInitSnake();
         ca1.putNewFood();
+    // predator-prey
+    } else if (universeMode == 2) {
+        for (int k = 1; k <= universeSize; k++) {
+            for (int j = 1; j <= universeSize; j++) {
+                ca1.setLifetime(j, k, ca1.maxLifetime);
+            }
+        }
+        qDebug() << "Setting Lifetime to max ...";
     }
     update();
+
 }
 
 
@@ -255,7 +265,9 @@ void GameWidget::newGeneration() {
         break;
     // predator-prey
     case 2:
-        ca1.worldEvolutionLife();
+        //ca1.worldEvolutionLife();
+        ca1.worldEvolutionPredator();
+        break;
     default:
         break;
     }
@@ -265,7 +277,7 @@ void GameWidget::newGeneration() {
     if (ca1.isNotChanged()) {
         const QString headlines[] = {"Evolution stopped!", "Game over!"};
         const QString details[] = {"All future generations will be identical to this one.",
-                             "Your snake hit an obstacle."};
+                                   "Your snake hit an obstacle."};
 
         QMessageBox msgBox;
         switch (universeMode) {
@@ -345,13 +357,13 @@ void GameWidget::mousePressEvent(QMouseEvent *e) {
     if (universeMode == 0) {
         if (ca1.getValue(j, k) != 0) {
             ca1.setValue(j, k, 0);
-            //ca1.setLifetime(j, k, 0);
         }
         else {
             ca1.setValue(j, k, 1);
         }
         update();
     }
+
     // predator-prey
     else if (universeMode == 2) {
         switch (cellMode) {
@@ -361,7 +373,7 @@ void GameWidget::mousePressEvent(QMouseEvent *e) {
                 ca1.setLifetime(j, k, lifeTime);
             } else {
                 ca1.setValue(j, k, 0);
-                ca1.setLifetime(j, k, 0);
+                ca1.setLifetime(j, k, ca1.maxLifetime);
             }
             break;
         case 1: // prey
@@ -370,30 +382,21 @@ void GameWidget::mousePressEvent(QMouseEvent *e) {
                 ca1.setLifetime(j, k, lifeTime);
             } else {
                 ca1.setValue(j, k, 0);
-                ca1.setLifetime(j, k, 0);
+                ca1.setLifetime(j, k, ca1.maxLifetime);
             }
             break;
         case 2: // food
             if (ca1.getValue(j, k) != 5) {
                 ca1.setValue(j, k, 5);
-                ca1.setLifetime(j, k, 0);
+                ca1.setLifetime(j, k, ca1.maxLifetime);
             } else {
                 ca1.setValue(j, k, 0);
-                ca1.setLifetime(j, k, 0);
+                ca1.setLifetime(j, k, ca1.maxLifetime);
             }
             break;
         default:
             break;
         }
-//        if (ca1.getValue(j, k) != 0) {
-//            ca1.setValue(j, k, 0);
-//            ca1.setLifetime(j, k, 0);
-//        }
-//        else {
-//            ca1.setValue(j, k, mode[cellMode]);
-//            if (mode[cellMode] == 9 || mode[cellMode] == 10)
-//                ca1.setLifetime(j, k, 50); // lifeTime = 50
-//        }
         update();
     }
 }
@@ -407,6 +410,7 @@ void GameWidget::mouseMoveEvent(QMouseEvent *e) {
 
     // int mode[9] = {1, 3, 6, 4, 2, 8, 9, 10, 11};
 
+    // game of life
     if (universeMode == 0) {
         if (ca1.getValue(j, k) == 0) {
             ca1.setValue(j, k, 1);
@@ -416,6 +420,7 @@ void GameWidget::mouseMoveEvent(QMouseEvent *e) {
             update();
         }
     }
+    // predator-prey
     else if (universeMode == 2) {
         switch (cellMode) {
         case 0: // predator
@@ -424,7 +429,7 @@ void GameWidget::mouseMoveEvent(QMouseEvent *e) {
                 ca1.setLifetime(j, k, lifeTime);
             } else {
                 ca1.setValue(j, k, 0);
-                ca1.setLifetime(j, k, 0);
+                ca1.setLifetime(j, k, ca1.maxLifetime);
             }
             break;
         case 1: // prey
@@ -433,16 +438,16 @@ void GameWidget::mouseMoveEvent(QMouseEvent *e) {
                 ca1.setLifetime(j, k, lifeTime);
             } else {
                 ca1.setValue(j, k, 0);
-                ca1.setLifetime(j, k, 0);
+                ca1.setLifetime(j, k, ca1.maxLifetime);
             }
             break;
         case 2: // food
             if (ca1.getValue(j, k) != 5) {
                 ca1.setValue(j, k, 5);
-                ca1.setLifetime(j, k, 0);
+                ca1.setLifetime(j, k, ca1.maxLifetime);
             } else {
                 ca1.setValue(j, k, 0);
-                ca1.setLifetime(j, k, 0);
+                ca1.setLifetime(j, k, ca1.maxLifetime);
             }
             break;
         default:
