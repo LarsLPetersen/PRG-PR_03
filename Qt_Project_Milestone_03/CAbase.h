@@ -149,10 +149,6 @@ public:
 
     int lifeTimeUI;
 
-    int* calcNeighborhood(int x, int y, char flag);
-
-    int* returnRandomMoves(int number);
-
     void cellEvolutionMove(int x, int y);
 
     void cellEvolutionDirection(int x, int y);
@@ -178,6 +174,7 @@ private:
 
 
 inline void CAbase::resetWorldSize(int nx, int ny, bool del) {
+    srand(time(NULL));
     // creation or re-creation of current and new universe with default values (0 for non-border cell and -1 for border cell)
     Nx = nx;
     Ny = ny;
@@ -570,49 +567,15 @@ inline void CAbase::worldEvolutionSnake() {
 //
 // predator-prey
 //
-inline int* CAbase::returnRandomMoves(int number) {
-    /* compute an array of random directions */
-    srand(time(NULL));
-    int randomMoves[number];
-    for (int i = 0; i < number; i++) {
-        randomMoves[i] = rand() % 4 + 1;
-    }
-    return randomMoves;
-}
-
-
-inline int* CAbase::calcNeighborhood(int x, int y, char flag) {
-    /* compute neighboring values or directions */
-    /* better to be solved with a pointer to member functions ... */
-    int neighbors[5] {0};
-    switch (flag) {
-    case 'd': // neighboring directions
-        neighbors[0] = getDirection(x, y);
-        neighbors[1] = getDirection(x, y + 1); // down
-        neighbors[2] = getDirection(x - 1, y); // left
-        neighbors[3] = getDirection(x + 1, y); // right
-        neighbors[4] = getDirection(x, y - 1); // up
-        break;
-    case 'w': // neighboring values
-        neighbors[0] = getValue(x, y);
-        neighbors[1] = getValue(x, y + 1); // down
-        neighbors[2] = getValue(x - 1, y); // left
-        neighbors[3] = getValue(x + 1, y); // right
-        neighbors[4] = getValue(x, y - 1); // up
-        break;
-    default:
-        break;
-    }
-    return neighbors;
-}
-
-
 inline void CAbase::cellEvolutionMove(int x, int y) {
     int lifeTime = getLifetime(x, y);
     int value = getValue(x, y);
-    int* neighborhoodWorld = calcNeighborhood(x, y, 'w');
-    int* neighborhoodDirections = calcNeighborhood(x, y, 'd');
-    srand(time(NULL));
+    int neighborhoodDirections[5];
+    neighborhoodDirections[0] = getDirection(x, y);
+    neighborhoodDirections[1] = getDirection(x, y + 1); // down
+    neighborhoodDirections[2] = getDirection(x - 1, y); // left
+    neighborhoodDirections[3] = getDirection(x + 1, y); // right
+    neighborhoodDirections[4] = getDirection(x, y - 1); // up
 
     int incomingNeighbors[5] {0};
     int n_sum = 0;
@@ -622,6 +585,9 @@ inline void CAbase::cellEvolutionMove(int x, int y) {
             n_sum++;
         }
     }
+    if (n_sum > 0) {
+        qDebug() << "cellEvolutionMove: " << x << " " << y << " has " << n_sum << " incoming neighbor(s)";
+    }
 
     if (n_sum == 0) { // no neighbor aims at this cell
         if (neighborhoodDirections[0] == 0) { // cell itself has no aim
@@ -630,14 +596,19 @@ inline void CAbase::cellEvolutionMove(int x, int y) {
         } else { // cell itself aims at a legal position
             setValueNew(x, y, 0);
             setLifetimeNew(x, y, maxLifetime);
+            if (value != 0) {
+                qDebug() << "cellEvolutionMove -> :" << x << " " << y << " aims at " << neighborhoodDirections[0];
+            }
+
         }
 
     } else if (n_sum == 1) { // exactly one neighbor aims at this cell
+        qDebug() << "cellEvolutionMove -> neighbor aims at " << x << " " << y;
         int i = 1;
         while (incomingNeighbors[i] != 1) {
             i++;
         }
-        position incomingCellCoordinates = convert(x, y, 10 - 2 * i);
+        position incomingCellCoordinates = convert(x, y, 2 * i);
         setValueNew(x, y, getValue(incomingCellCoordinates.x, incomingCellCoordinates.y));
         qDebug() << x << " " << y << "   " << getValue(incomingCellCoordinates.x, incomingCellCoordinates.y);
         if (value == 2 || value == 5) { // cell is devoured
@@ -648,6 +619,7 @@ inline void CAbase::cellEvolutionMove(int x, int y) {
 
     } else if (n_sum > 1) { // more than one neighbor aims at this cell
         // dummy
+        qDebug() << "cellEvolutionMove -> n_sum > 1";
         setValueNew(x, y, 0);
         setLifetimeNew(x, y, maxLifetime);
     }
@@ -656,8 +628,12 @@ inline void CAbase::cellEvolutionMove(int x, int y) {
 
 inline void CAbase::cellEvolutionDirection(int x, int y) {
     int v = getValue(x, y);
-    srand(time(NULL));
-    int* neighbors = calcNeighborhood(x, y, 'w');
+    int neighbors[5];
+    neighbors[0] = getValue(x, y);
+    neighbors[1] = getValue(x, y + 1); // down
+    neighbors[2] = getValue(x - 1, y); // left
+    neighbors[3] = getValue(x + 1, y); // right
+    neighbors[4] = getValue(x, y - 1); // up
     int n_sum = 0;
 
     //
@@ -685,12 +661,14 @@ inline void CAbase::cellEvolutionDirection(int x, int y) {
             }
             if (na_sum == 0) { // no allowed direction
                 setDirection(x, y, 0);
+                qDebug() << "Direction: " << x << " " << y << " " << 0;
             } else if (na_sum == 1) { // exactly one direction is allowed
                 int i = 1;
                 while (allowedDirections[i] != 1) {
                     i++;
                 }
-                setDirection(x, y, i);
+                setDirection(x, y, 2 * i);
+                qDebug() << "Direction: " << x << " " << y << " " << 2 * i;
             } else if (na_sum > 1) { // more than one direction is allowed
                 int r = rand() % (na_sum) + 1;
                 int i = 0;
@@ -700,7 +678,8 @@ inline void CAbase::cellEvolutionDirection(int x, int y) {
                         r -= 1;
                     }
                 }
-                setDirection(x, y, i);
+                setDirection(x, y, 2 * i);
+                qDebug() << "Direction: " << x << " " << y << " " << 2 * i;
             }
 
         // EXACTLY ONE PREY ITEM IN NEIGHBORHOOD
@@ -709,7 +688,7 @@ inline void CAbase::cellEvolutionDirection(int x, int y) {
             while (preyNeighbors[i] != 1) {
                 i++;
             }
-            setDirection(x, y, i);
+            setDirection(x, y, 2 * i);
 
         // MOVE TOWARDS A RANDOM NEIGHBOR
         } else if (n_sum > 1) {
@@ -721,7 +700,7 @@ inline void CAbase::cellEvolutionDirection(int x, int y) {
                     r -= 1;
                 }
             }
-            setDirection(x, y, i);
+            setDirection(x, y, 2 * i);
         }
     //
     // prey
@@ -762,7 +741,7 @@ inline void CAbase::cellEvolutionDirection(int x, int y) {
                     while (allowedDirections[i] != 1) {
                         i++;
                     }
-                    setDirection(x, y, i);
+                    setDirection(x, y, 2 * i);
                 } else if (na_sum > 1) { // more than one direction is allowed
                     int r = rand() % (na_sum) + 1;
                     int i = 0;
@@ -772,7 +751,7 @@ inline void CAbase::cellEvolutionDirection(int x, int y) {
                             r -= 1;
                         }
                     }
-                    setDirection(x, y, i);
+                    setDirection(x, y, 2 * i);
                 }
 
             } else if (n_sum == 1) { // move towards this food neighbor
@@ -780,7 +759,7 @@ inline void CAbase::cellEvolutionDirection(int x, int y) {
                 while (foodNeighbors[i] != 1) {
                     i++;
                 }
-                setDirection(x, y, i);
+                setDirection(x, y, 2 * i);
             } else if (n_sum > 1) { // randomly move towards a random food neighbor
                 int r = rand() % (n_sum) + 1;
                 int i = 0;
@@ -790,7 +769,7 @@ inline void CAbase::cellEvolutionDirection(int x, int y) {
                         r -= 1;
                     }
                 }
-                setDirection(x, y, i);
+                setDirection(x, y, 2 * i);
             }
         }
     //
@@ -803,18 +782,22 @@ inline void CAbase::cellEvolutionDirection(int x, int y) {
 
 
 inline void CAbase::worldEvolutionPredator() {
+    qDebug() << "worldEvolutionPredator -> loop: cellEvolutionDirection()";
     for (int ix = 1; ix <= Nx; ix++) {
         for (int iy = 1; iy <= Ny; iy++) {
             cellEvolutionDirection(ix, iy);
             if (getDirection(ix, iy) != 0) {
-                qDebug() << ix << " " << iy;
+                qDebug() << ix << " " << iy << "  dir: " << getDirection(ix, iy);
             }
         }
     }
-
+    qDebug() << "worldEvolutionPredator -> loop: cellEvolutionDirection()";
     for (int ix = 1; ix <= Nx; ix++) {
         for (int iy = 1; iy <= Ny; iy++) {
             cellEvolutionMove(ix, iy);
+            if (getDirection(ix, iy) != 0) {
+                qDebug() << ix << " " << iy << " new values: " << worldNew[iy * (Nx + 2) + ix];
+            }
         }
     }
 
@@ -829,7 +812,7 @@ inline void CAbase::worldEvolutionPredator() {
             worldLifetime[iy * (Nx + 2) + ix] = worldLifetimeNew[iy * (Nx + 2) + ix];
         }
     }
-    qDebug() << "nochanges: " << nochanges;
+    qDebug() << "worldEvolutionPredator -> nochanges: " << nochanges;
 }
 
 

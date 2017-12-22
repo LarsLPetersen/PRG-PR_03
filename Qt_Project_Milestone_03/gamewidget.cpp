@@ -41,6 +41,7 @@ GameWidget::~GameWidget() {
 
 void GameWidget::startGame(const int &number) {
     /* start the game */
+    qDebug() << "startGame()";
     emit gameStarted(universeMode, true);
     generations = number;
     timer->start();
@@ -57,14 +58,14 @@ void GameWidget::stopGame() {
 
 
 void GameWidget::clearGame() {
-    qDebug() << "Clearing the game ...";
+    qDebug() << "clearGame()";
     for (int k = 1; k <= universeSize; k++) {
         for (int j = 1; j <= universeSize; j++) {
             ca1.setValue(j, k, 0);
         }
     }
     gameEnds(universeMode, true);
-    qDebug() << "Resetting Worldsize ...";
+    qDebug() << "clearGame -> resetWorldsize()";
     ca1.resetWorldSize(universeSize, universeSize);
 
     // snake
@@ -78,7 +79,7 @@ void GameWidget::clearGame() {
                 ca1.setLifetime(j, k, ca1.maxLifetime);
             }
         }
-        qDebug() << "Setting Lifetime to max ...";
+        qDebug() << "clearGame -> setting lifetime to max ...";
     }
     update();
 
@@ -251,6 +252,7 @@ void GameWidget::setInterval(int msec) {
 
 void GameWidget::newGeneration() {
     /* start the evolution of universe and update the game field */
+    qDebug() << "newGeneration()";
     if (generations < 0)
         generations++;
 
@@ -266,6 +268,7 @@ void GameWidget::newGeneration() {
     // predator-prey
     case 2:
         //ca1.worldEvolutionLife();
+        qDebug() << "newGeneration -> worldEvolutionPredator()";
         ca1.worldEvolutionPredator();
         break;
     default:
@@ -483,7 +486,7 @@ void GameWidget::paintUniverse(QPainter &p) {
                 qreal top  = (qreal) (cellHeight * k - cellHeight); // margin from top
                 QRectF r(left, top, (qreal) cellWidth, (qreal) cellHeight);
                 // p.fillRect(r, QBrush(masterColor));
-                if (universeMode == 0 | universeMode == 1) {
+                if (universeMode == 0 || universeMode == 1) {
                     p.fillRect(r, QBrush(masterColor));
                 } else {
                     p.fillRect(r, getPredefinedColor(ca1.getValue(j, k))); //fill cell with brush of cell type
