@@ -53,8 +53,8 @@ public slots:
 
     QColor getPredefinedColor(const int &color);
 
-    QString dumpGame();
-    void reconstructGame(const QString &data);
+    QString dumpGame(char member = 'v');
+    void reconstructGame(const QString &data, char member = 'v');
 
     //
     // snake

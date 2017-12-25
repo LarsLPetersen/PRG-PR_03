@@ -130,15 +130,15 @@ CAbase GameWidget::getCA() {
 }
 
 
-QString GameWidget::dumpGame() {
-    /* dump current universe */
+QString GameWidget::dumpGame(char member) {
+    /* dump current universe into a string*/
+
     char temp;
     QString master = "";
 
     switch (universeMode) {
-    //
-    // game of life
-    //
+
+    // GAME OF LIFE
     case 0:
         for (int k = 1; k <= universeSize; k++) {
             for (int j = 1; j <= universeSize; j++) {
@@ -154,9 +154,7 @@ QString GameWidget::dumpGame() {
         return master;
         break;
 
-    //
-    // snake
-    //
+    // SNAKE
     case 1:
         for (int k = 1; k <= universeSize; k++) {
             for (int j = 1; j <= universeSize; j++) {
@@ -177,24 +175,64 @@ QString GameWidget::dumpGame() {
         return master;
         break;
 
+    // PREDATOR
+    case 2:
+        if (member == 'v') { // world value
+            for (int k = 1; k <= universeSize; k++) {
+                for (int j = 1; j <= universeSize; j++) {
+                    int value = ca1.getValue(j, k);
+                    if (value == 1) {
+                        temp = 'J';
+                    } else if (value == 2) {
+                        temp = 'G';
+                    } else if (value == 5) {
+                        temp = 'F';
+                    } else {
+                        temp = 'o';
+                    }
+                    master.append(temp);
+                }
+                master.append("\n");
+            }
+        } else if (member == 'l') { // lifetime
+            for (int k = 1; k <= universeSize; k++) {
+                for (int j = 1; j <= universeSize; j++) {
+                    int lT = ca1.getLifetime(j, k);
+                    if (lT == 0) {
+                        temp = 'B';
+                    } else if (lT == __INT16_MAX__) {
+                        temp = 'A';
+                    } else if (lT > 0 && lT < __INT16_MAX__) {
+                        temp = 'B' + lT;
+                    }
+                    master.append(temp);
+                }
+                master.append("\n");
+            }
+        }
+
+        return master;
+        break;
+
     default:
-        return "";
+        return master;
         break;
     }
 
 }
 
 
-void GameWidget::reconstructGame(const QString &data) {
-     // reconstruct game from dump
+void GameWidget::reconstructGame(const QString &data, char member) {
+     /* reconstruct game from dump */
+
     int current;
     int ascii_H = (int) 'H';
+    int ascii_B = (int) 'B';
     int ascii_Char;
 
     switch (universeMode) {
-    //
-    // game of life
-    //
+
+    // GAME OF LIFE
     case 0:
         current = 0;
         for (int k = 1; k <= universeSize; k++) {
@@ -208,9 +246,7 @@ void GameWidget::reconstructGame(const QString &data) {
         }
         break;
 
-    //
-    // snake
-    //
+    // SNAKE
     case 1:
         current = 0;
         for (int k = 1; k <= universeSize; k++) {
@@ -228,6 +264,48 @@ void GameWidget::reconstructGame(const QString &data) {
             }
             current++;
         }
+        break;
+
+    // PREDATOR
+    case 2:
+        if (member == 'v') {
+            current = 0;
+            for (int k = 1; k <= universeSize; k++) {
+                for (int j = 1; j <= universeSize; j++) {
+                    ascii_Char = data[current].unicode();
+                    if (data[current] == 'F') {
+                        ca1.setValue(j, k, 5);
+                    }
+                    else if (data[current] == 'G') {
+                        ca1.setValue(j, k, 2);
+                    } else if (data[current] == 'J'){
+                        ca1.setValue(j, k, 1);
+                    } else {
+                         ca1.setValue(j, k, 0);
+                    }
+                    current++;
+                }
+                current++;
+            }
+        } else if (member == 'l') {
+            current = 0;
+            for (int k = 1; k <= universeSize; k++) {
+                for (int j = 1; j <= universeSize; j++) {
+                    ascii_Char = data[current].unicode();
+                    if (data[current] == 'A') {
+                        ca1.setLifetime(j, k, __INT16_MAX__);
+                    }
+                    else if (data[current] == 'B') {
+                        ca1.setLifetime(j, k, 0);
+                    } else if (ascii_Char > ascii_B){
+                        ca1.setLifetime(j, k, ascii_Char - ascii_B);
+                    }
+                    current++;
+                }
+                current++;
+            }
+        }
+
         break;
 
     default:
@@ -252,7 +330,7 @@ void GameWidget::setInterval(int msec) {
 
 void GameWidget::newGeneration() {
     /* start the evolution of universe and update the game field */
-    //qDebug() << "newGeneration()";
+
     if (generations < 0)
         generations++;
 
@@ -324,7 +402,8 @@ void GameWidget::newGeneration() {
 
 
 void GameWidget::newGenerationColor() {
-    /* Start the evolution of universe and update the game field for "Cyclic cellular automata" mode */
+    /* start the evolution of universe and update the game field for "Cyclic cellular automata" mode */
+
     if (generations < 0)
         generations++;
 
@@ -341,6 +420,8 @@ void GameWidget::newGenerationColor() {
 
 
 void GameWidget::paintEvent(QPaintEvent *) {
+    /* paint the grid and the universe inside ui */
+
     QPainter p(this);
     paintGrid(p);
     paintUniverse(p);
@@ -462,6 +543,8 @@ void GameWidget::mouseMoveEvent(QMouseEvent *e) {
 
 
 void GameWidget::paintGrid(QPainter &p) {
+    /* paint the grid in the ui */
+
     QRect borders(0, 0, width() - 1, height() - 1); // borders of the universe
     QColor gridColor = masterColor; // color of the grid
     gridColor.setAlpha(10); // must be lighter than main color
@@ -477,6 +560,8 @@ void GameWidget::paintGrid(QPainter &p) {
 
 
 void GameWidget::paintUniverse(QPainter &p) {
+    /* paint cell values with specific colors into grid */
+
     double cellWidth = (double) width() / universeSize;
     double cellHeight = (double) height() / universeSize;
     for (int k = 1; k <= universeSize; k++) {

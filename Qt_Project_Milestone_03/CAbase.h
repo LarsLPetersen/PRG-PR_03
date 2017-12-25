@@ -90,16 +90,12 @@ public:
 
     void resetWorldSize(int nx, int ny, bool del = 0);
 
-    //
-    // game of life
-    //
+    // GAME OF LIFE
     int cellEvolutionLife(int x, int y);
 
     void worldEvolutionLife();
 
-    //
-    // snake
-    //
+    // SNAKE
     struct direction {
         int past;
         int future;
@@ -136,9 +132,7 @@ public:
 
     void putInitSnake();
 
-    //
-    // predator-prey
-    //
+    // PREDATOR
     const int maxLifetime = __INT16_MAX__;
 
     int lifeTimeUI;
@@ -169,6 +163,8 @@ private:
 
 
 inline void CAbase::resetWorldSize(int nx, int ny, bool del) {
+    /* main function to reset the cellular automata */
+
     // initialize randomization
     srand(time(NULL));
 
@@ -230,9 +226,7 @@ inline void CAbase::resetWorldSize(int nx, int ny, bool del) {
 }
 
 
-//
-// game of life
-//
+// GAME OF LIFE
 inline int CAbase::cellEvolutionLife(int x, int y) {
     /* Rules
      *
@@ -291,9 +285,7 @@ inline void CAbase::worldEvolutionLife() {
 }
 
 
-//
-// snake
-//
+// SNAKE
 inline CAbase::position CAbase::convert(int x, int y, int sD) {
     /* map snakeDirection to array/grid coordinates */
 
@@ -689,9 +681,7 @@ inline void CAbase::cellEvolutionDirection(int x, int y) {
     neighbors[4] = getValue(x, y - 1); // up
     int n_sum = 0;
 
-    //
-    // predator
-    //
+    // PREDATOR
     if (neighbors[0] == 1) {
         int preyNeighbors[5] {0};
 
@@ -752,9 +742,8 @@ inline void CAbase::cellEvolutionDirection(int x, int y) {
             }
             setDirection(x, y, 2 * i);
         }
-    //
-    // prey
-    //
+
+    // PREY
     } else if (neighbors[0] == 2) {
         bool hasPredatorNeighbor {false};
         for (int i = 1; i <= 4; i++) {
@@ -824,9 +813,8 @@ inline void CAbase::cellEvolutionDirection(int x, int y) {
                 setDirection(x, y, 2 * i);
             }
         }
-    //
-    // food or empty cell
-    //
+
+    // FOOD OR EMPTY CELL
     } else {
         setDirection(x, y, 0);
     }
