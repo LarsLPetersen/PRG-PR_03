@@ -16,13 +16,12 @@ GameWidget::GameWidget(QWidget *parent) :
     QWidget(parent),
     timer(new QTimer(this)),
     timerColor(new QTimer(this)),
-    generations(-1),
     ca1(),
     universeSize(50),
     universeMode(0),
     cellMode(0),
-    lifeTime(50)
-    //randomMode(0)
+    lifeTime(50),
+    generations(-1)
 
 {
     timer->setInterval(300);
@@ -41,7 +40,7 @@ GameWidget::~GameWidget() {
 
 void GameWidget::startGame(const int &number) {
     /* start the game */
-    //qDebug() << "startGame()";
+
     emit gameStarted(universeMode, true);
     generations = number;
     timer->start();
@@ -51,6 +50,7 @@ void GameWidget::startGame(const int &number) {
 
 void GameWidget::stopGame() {
     /* stop the game */
+
     emit gameStopped(universeMode, true);
     timer->stop();
     timerColor->stop();
@@ -58,28 +58,25 @@ void GameWidget::stopGame() {
 
 
 void GameWidget::clearGame() {
-    //qDebug() << "clearGame()";
     for (int k = 1; k <= universeSize; k++) {
         for (int j = 1; j <= universeSize; j++) {
             ca1.setValue(j, k, 0);
         }
     }
     gameEnds(universeMode, true);
-    //qDebug() << "clearGame -> resetWorldsize()";
     ca1.resetWorldSize(universeSize, universeSize);
 
     // snake
     if (universeMode == 1) {
         ca1.putInitSnake();
         ca1.putNewFood();
-    // predator-prey
+    // predator
     } else if (universeMode == 2) {
         for (int k = 1; k <= universeSize; k++) {
             for (int j = 1; j <= universeSize; j++) {
                 ca1.setLifetime(j, k, ca1.maxLifetime);
             }
         }
-        //qDebug() << "clearGame -> setting lifetime to max ...";
     }
     update();
 
@@ -92,7 +89,6 @@ int GameWidget::getUniverseSize() {
 
 
 void GameWidget::setUniverseSize(const int &s) {
-    /* set number of the cells in one row */
     universeSize = s;
     ca1.resetWorldSize(s, s);
     update();
@@ -105,7 +101,6 @@ int GameWidget::getUniverseMode() {
 
 
 void GameWidget::setUniverseMode(const int &m) {
-    /* set universe mode */
     int old_m = GameWidget::getUniverseMode();
     universeMode = m;
 
@@ -120,7 +115,6 @@ int GameWidget::getCellMode() {
 
 
 void GameWidget::setCellMode(const int &m) {
-    /* set cell mode */
     cellMode = m;
 }
 
@@ -268,7 +262,7 @@ void GameWidget::reconstructGame(const QString &data, char member) {
 
     // PREDATOR
     case 2:
-        if (member == 'v') {
+        if (member == 'v') { // world values
             current = 0;
             for (int k = 1; k <= universeSize; k++) {
                 for (int j = 1; j <= universeSize; j++) {
@@ -287,7 +281,7 @@ void GameWidget::reconstructGame(const QString &data, char member) {
                 }
                 current++;
             }
-        } else if (member == 'l') {
+        } else if (member == 'l') { // lifetime values
             current = 0;
             for (int k = 1; k <= universeSize; k++) {
                 for (int j = 1; j <= universeSize; j++) {
@@ -305,7 +299,6 @@ void GameWidget::reconstructGame(const QString &data, char member) {
                 current++;
             }
         }
-
         break;
 
     default:
@@ -317,13 +310,11 @@ void GameWidget::reconstructGame(const QString &data, char member) {
 
 
 int GameWidget::getInterval() {
-    /* interval between generations */
     return timer->interval();
 }
 
 
 void GameWidget::setInterval(int msec) {
-    /* set interval between generations */
     timer->setInterval(msec);
 }
 
@@ -343,10 +334,8 @@ void GameWidget::newGeneration() {
     case 1:
         ca1.worldEvolutionSnake();
         break;
-    // predator-prey
+    // predator
     case 2:
-        //ca1.worldEvolutionLife();
-        //qDebug() << "newGeneration -> worldEvolutionPredator()";
         ca1.worldEvolutionPredator();
         break;
     default:
@@ -374,7 +363,7 @@ void GameWidget::newGeneration() {
             msgBox.setText(headlines[1]);
             msgBox.setInformativeText(details[1]);
             break;
-        // predator-prey
+        // predator
         case 2:
             msgBox.setIcon(QMessageBox::Information);
             msgBox.setText(headlines[0]);
@@ -435,8 +424,6 @@ void GameWidget::mousePressEvent(QMouseEvent *e) {
     int k = floor(e->y() / cellHeight) + 1;
     int j = floor(e->x() / cellWidth) + 1;
 
-    // int mode[9] = {1, 3, 6, 4, 2, 8, 9, 10, 11};
-
     // game of life
     if (universeMode == 0) {
         if (ca1.getValue(j, k) != 0) {
@@ -492,15 +479,10 @@ void GameWidget::mouseMoveEvent(QMouseEvent *e) {
     int k = floor(e->y() / cellHeight) + 1;
     int j = floor(e->x() / cellWidth) + 1;
 
-    // int mode[9] = {1, 3, 6, 4, 2, 8, 9, 10, 11};
-
     // game of life
     if (universeMode == 0) {
         if (ca1.getValue(j, k) == 0) {
             ca1.setValue(j, k, 1);
-//            ca1.setValue(j, k, mode[cellMode]);
-//            if (mode[cellMode] == 9 || mode[cellMode] == 10)
-//                ca1.setLifetime(j, k, 50); // lifetime = 50
             update();
         }
     }
@@ -511,26 +493,17 @@ void GameWidget::mouseMoveEvent(QMouseEvent *e) {
             if (ca1.getValue(j, k) != 1) {
                 ca1.setValue(j, k, 1);
                 ca1.setLifetime(j, k, lifeTime);
-            } else {
-                ca1.setValue(j, k, 0);
-                ca1.setLifetime(j, k, ca1.maxLifetime);
             }
             break;
         case 1: // prey
             if (ca1.getValue(j, k) != 2) {
                 ca1.setValue(j, k, 2);
                 ca1.setLifetime(j, k, lifeTime);
-            } else {
-                ca1.setValue(j, k, 0);
-                ca1.setLifetime(j, k, ca1.maxLifetime);
             }
             break;
         case 2: // food
             if (ca1.getValue(j, k) != 5) {
                 ca1.setValue(j, k, 5);
-                ca1.setLifetime(j, k, ca1.maxLifetime);
-            } else {
-                ca1.setValue(j, k, 0);
                 ca1.setLifetime(j, k, ca1.maxLifetime);
             }
             break;
@@ -571,23 +544,11 @@ void GameWidget::paintUniverse(QPainter &p) {
                 qreal top  = (qreal) (cellHeight * k - cellHeight); // margin from top
                 QRectF r(left, top, (qreal) cellWidth, (qreal) cellHeight);
                 // p.fillRect(r, QBrush(masterColor));
-                if (universeMode == 0 || universeMode == 1) {
+                if (universeMode != 2) {
                     p.fillRect(r, QBrush(masterColor));
                 } else {
                     p.fillRect(r, getPredefinedColor(ca1.getValue(j, k))); //fill cell with brush of cell type
                 }
-
-//                if (0 && universeMode != 7) { // randomMode = 0
-//                    p.fillRect(r, setColor(ca1.getColor(j, k))); //fill cell with brush from random mode
-//                 }
-//                else {
-//                    if (ca1.getValue(j, k) == 1 || universeMode == 7) {
-//                        p.fillRect(r, QBrush(masterColor)); // fill cell with brush of main color
-//                    }
-//                    else {
-//                        p.fillRect(r, setColor(ca1.getValue(j, k))); //fill cell with brush of cell type
-//                    }
-//                }
             }
         }
     }
@@ -648,13 +609,11 @@ void GameWidget::setPositionFood(int x, int y) {
 
 
 int GameWidget::getLifetime() {
-    /* get the lifetime of each cell */
     return lifeTime;
 }
 
 
 void GameWidget::setLifetime(const int &l) {
-    /* set lifetime for all cells in the universe */
     lifeTime = l;
 }
 
