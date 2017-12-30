@@ -56,9 +56,7 @@ public slots:
     QString dumpGame(char member = 'v');
     void reconstructGame(const QString &data, char member = 'v');
 
-    //
-    // snake
-    //
+    // SNAKE
     void calcDirectionSnake (int dS);
 
     void setDirectionSnake(int past, int future);
@@ -71,9 +69,6 @@ public slots:
 
     void setSnakeAction(int a);
 
-    //
-    // predator-prey
-    //
 
 private slots:
     void paintGrid(QPainter &p);
@@ -91,8 +86,6 @@ private:
     int cellMode;
     int lifeTime;
     int generations;
-    // int randomMode;
-
 };
 
 

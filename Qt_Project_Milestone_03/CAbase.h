@@ -444,9 +444,7 @@ inline void CAbase::worldEvolutionSnake() {
 
     // based on the global action each of the three cases is considered individually
     switch (snakeAction) {
-    //
     // move
-    //
     case 0:
         for (int x = 1; x <= Nx; x++) {
             for (int y = 1; y <= Ny; y++) {
@@ -487,9 +485,7 @@ inline void CAbase::worldEvolutionSnake() {
         directionSnake.past = directionSnake.future;
         break;
 
-    //
     // move and feed
-    //
     case 1:
         for (int x = 1; x <= Nx; x++) {
             for (int y = 1; y <= Ny; y++) {
@@ -519,9 +515,7 @@ inline void CAbase::worldEvolutionSnake() {
         putNewFood();
         break;
 
-    //
     // move and die
-    //
     case 2:
         nochanges = true;
         break;
@@ -531,10 +525,7 @@ inline void CAbase::worldEvolutionSnake() {
     }
 }
 
-
-//
-// predator-prey
-//
+// PREDATOR
 inline void CAbase::cellEvolutionConsistency(int x, int y) {
     /* rectify directions so that at most one neighbor is incoming */
 
@@ -554,8 +545,9 @@ inline void CAbase::cellEvolutionConsistency(int x, int y) {
 
     int incomingNeighbors[5] {0};
     int incomingViableNeighbors[5] {0};
-    int n_sum = 0;
-    int nv_sum = 0;
+
+    int n_sum = 0; // # of incoming neighbors
+    int nv_sum = 0; // # of incoming viable neighbors
 
     // compute incoming and "viable" incoming neighbors
     for (int i = 1; i < 5; i++) {
